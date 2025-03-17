@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <corners android:radius="20dp"/> <!-- Bo góc button -->
+    <corners android:radius="8dp"/> <!-- More consistent with Material Design -->
     <gradient
-        android:startColor="#00C9FF"
-        android:endColor="#92FE9D"
+        android:startColor="@color/google_blue"
+        android:endColor="@color/google_blue_dark"
         android:angle="0">
     </gradient>
 </shape>

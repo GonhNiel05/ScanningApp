@@ -15,21 +15,25 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.ImageView;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
-import android.text.method.ScrollingMovementMethod;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
@@ -41,22 +45,36 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
     // UI Components
-    private ImageView cameraImage;
-    private Button captureImgBtn, uploadImageBtn, copyTextBtn, clearTextBtn, convertTextBtn;
-    private TextView resultText;
-    private ImageButton historyBtn;
+    private MaterialToolbar toolbar;
+    private FloatingActionButton cameraFab;
+    private BottomNavigationView bottomNavView;
+    
+    // Feature grid elements
+    private LinearLayout pdfToolFeature;
+    private LinearLayout idCardFeature;
+    private LinearLayout extractTextFeature;
+    private LinearLayout captureImageFeature;
+    private LinearLayout aiSolverFeature;
+    private LinearLayout importFileFeature;
+    private LinearLayout imageRecoveryFeature;
+    private LinearLayout viewAllFeature;
+    
+    // Recent items
+    private LinearLayout emptyRecentState;
+    private RecyclerView recentItemsRecyclerView;
+    private TextView viewAllRecentBtn;
+    
     private String currentPhotoPath = null;
 
     private ActivityResultLauncher<Intent> pickImageLauncher;
-    //lắng nghe click để pick ảnh
-
-    // Activity result launchers for permission and taking pictures
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private ActivityResultLauncher<Uri> takePictureLauncher;
 
@@ -67,70 +85,100 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize views and event handlers
         initializeViews();
+        setupToolbar();
+        setupBottomNavigation();
+        setupFeatureGrid();
+        setupLaunchers();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
         }
-
     }
 
-    private void initializeViews() {
-        // Linking UI components with their XML counterparts
-        cameraImage = findViewById(R.id.cameraImage);
-        captureImgBtn = findViewById(R.id.captureImgBtn);
-        uploadImageBtn = findViewById(R.id.uploadImgBtn);
-        copyTextBtn = findViewById(R.id.copyTextBtn);
-        clearTextBtn = findViewById(R.id.clearTextBtn);
-        convertTextBtn = findViewById(R.id.convertTextBtn);
-        resultText = findViewById(R.id.resultText);
-        historyBtn = findViewById(R.id.historyBtn);
+    private void setupToolbar() {
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+    }
 
-        resultText.setMovementMethod(new ScrollingMovementMethod()); // Enable scrolling for text view
-        copyTextBtn.setVisibility(Button.GONE); // Hide copy button initially
-
+    private void setupBottomNavigation() {
+        bottomNavView = findViewById(R.id.bottomNav);
+        
+        // Set up listener for bottom navigation
+        bottomNavView.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            
+            if (id == R.id.navigation_home) {
+                // Already on home screen
+                return true;
+            } else if (id == R.id.navigation_files) {
+                openHistoryActivity();
+                return true;
+            } else if (id == R.id.navigation_capture) {
+                requestCameraPermission();
+                return false; // Don't select this item
+            } else if (id == R.id.navigation_tools) {
+                showSnackbar("Tools section clicked");
+                return true;
+            } else if (id == R.id.navigation_profile) {
+                openProfileActivity();
+                return true;
+            }
+            
+            return false;
+        });
+    }
+    
+    private void setupFeatureGrid() {
+        // Find feature elements
+        pdfToolFeature = findViewById(R.id.pdfToolFeature);
+        extractTextFeature = findViewById(R.id.extractTextFeature);
+        captureImageFeature = findViewById(R.id.captureImageFeature);
+        importFileFeature = findViewById(R.id.importFileFeature);
+        imageRecoveryFeature = findViewById(R.id.imageRecoveryFeature);
+        viewAllFeature = findViewById(R.id.viewAllFeature);
+        
+        // Hide removed features
+        if (idCardFeature != null) {
+            idCardFeature.setVisibility(View.GONE);
+        }
+        
+        if (aiSolverFeature != null) {
+            aiSolverFeature.setVisibility(View.GONE);
+        }
+        
+        // Set click listeners
+        pdfToolFeature.setOnClickListener(v -> showSnackbar("PDF Tools selected"));
+        extractTextFeature.setOnClickListener(v -> openTextRecognitionScreen());
+        captureImageFeature.setOnClickListener(v -> requestCameraPermission());
+        importFileFeature.setOnClickListener(v -> pickImageFromGallery());
+        imageRecoveryFeature.setOnClickListener(v -> showSnackbar("Image Recovery selected (Premium Feature)"));
+        viewAllFeature.setOnClickListener(v -> showSnackbar("View All Features selected"));
+    }
+    
+    private void setupLaunchers() {
         // Request permission to use camera
         requestPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
-                new ActivityResultCallback<Boolean>() {
-                    @Override
-                    public void onActivityResult(Boolean isGranted) {
-                        if (isGranted) {
-                            captureImage();
-                        } else {
-                            Toast.makeText(MainActivity.this, "Camera permission denied", Toast.LENGTH_SHORT).show();
-                        }
+                isGranted -> {
+                    if (isGranted) {
+                        captureImage();
+                    } else {
+                        showSnackbar(getString(R.string.camera_permission_denied));
                     }
                 }
         );
-
-
-        // Khi nhấn nút "Lịch sử", mở `HistoryActivity`
-        historyBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
-            startActivity(intent);
-        });
-
 
         // Take picture and handle result
         takePictureLauncher = registerForActivityResult(
                 new ActivityResultContracts.TakePicture(),
-                new ActivityResultCallback<Boolean>() {
-                    @Override
-                    public void onActivityResult(Boolean success) {
-                        if (success && currentPhotoPath != null) {
-                            Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
-                            cameraImage.setImageBitmap(bitmap);
-                            recognizeText(bitmap);
-                        }
+                success -> {
+                    if (success && currentPhotoPath != null) {
+                        processCapturedImage();
                     }
                 }
         );
-
-        // Handle capture button click
-        captureImgBtn.setOnClickListener(v -> requestPermissionLauncher.launch(Manifest.permission.CAMERA));
-
-
-        //Handle pick image click
+        
+        // Handle pick image from gallery
         pickImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -138,42 +186,87 @@ public class MainActivity extends AppCompatActivity {
                         Uri imageUri = result.getData().getData();
                         if (imageUri != null) {
                             try {
-                                // Chuyển URI thành Bitmap
+                                // Convert URI to Bitmap
                                 Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
-                                cameraImage.setImageBitmap(bitmap); // Hiển thị ảnh
-                                recognizeText(bitmap); // Nhận diện văn bản từ ảnh
+                                processImage(bitmap);
                             } catch (IOException e) {
                                 e.printStackTrace();
-                                Toast.makeText(MainActivity.this, "Lỗi khi xử lý ảnh", Toast.LENGTH_SHORT).show();
+                                showSnackbar(getString(R.string.error_processing));
                             }
                         }
                     }
                 }
         );
+    }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }
 
-        uploadImageBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            intent.setType("image/*"); // Chỉ chọn ảnh
-            pickImageLauncher.launch(intent);
-        });
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            // Handle settings action
+            showSnackbar("Settings clicked");
+            return true;
+        } else if (id == R.id.action_help) {
+            // Handle help action
+            showSnackbar("Help clicked");
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
+    private void initializeViews() {
+        // Main views
+        cameraFab = findViewById(R.id.cameraFab);
+        
+        // Recent views
+        emptyRecentState = findViewById(R.id.emptyRecentState);
+        recentItemsRecyclerView = findViewById(R.id.recentItemsRecyclerView);
+        viewAllRecentBtn = findViewById(R.id.viewAllRecentBtn);
+        
+        // Setup empty state for recent items
+        emptyRecentState.setVisibility(View.VISIBLE);
+        recentItemsRecyclerView.setVisibility(View.GONE);
+        
+        // Set click listeners for main action buttons
+        cameraFab.setOnClickListener(v -> requestCameraPermission());
+        viewAllRecentBtn.setOnClickListener(v -> openHistoryActivity());
+    }
+    
+    private void requestCameraPermission() {
+        requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+    }
+    
+    private void openHistoryActivity() {
+        Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
+        startActivity(intent);
+    }
+    
+    private void openProfileActivity() {
+        Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
+        startActivity(intent);
+    }
+    
+    private void openTextRecognitionScreen() {
+        showSnackbar("Opening text recognition");
+        // For demonstration, we'll use the camera action
+        requestCameraPermission();
+    }
+    
+    private void pickImageFromGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        pickImageLauncher.launch(intent);
+    }
 
-        //nút Clear
-        // Xử lý sự kiện khi nhấn nút Clear
-        clearTextBtn.setOnClickListener(v -> {
-            resultText.setText(""); // Xóa nội dung trong TextView
-            cameraImage.setImageDrawable(null); // Xóa ảnh trong ImageView
-        });
-
-        convertTextBtn.setOnClickListener(v -> {
-            try {
-                convertTextToPDF();
-            } catch (IOException e) {
-                Toast.makeText(MainActivity.this, "Lỗi khi tạo PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
+    // Show a snackbar message
+    private void showSnackbar(String message) {
+        Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT).show();
     }
 
     // Create an image file for storing captured photos
@@ -192,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             photoFile = createImageFile();
         } catch (IOException ex) {
-            Toast.makeText(this, "Error occurred while creating the file", Toast.LENGTH_SHORT).show();
+            showSnackbar("Error creating the file");
         }
 
         if (photoFile != null) {
@@ -200,124 +293,34 @@ public class MainActivity extends AppCompatActivity {
             takePictureLauncher.launch(photoUri);
         }
     }
-
-    private void recognizeText(Bitmap bitmap) {
-        InputImage image = InputImage.fromBitmap(bitmap, 0);
-
-        // Bộ nhận diện chữ Latin
-        TextRecognizer latinRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
-
-        // Bộ nhận diện chữ Trung Quốc
-        TextRecognizer chineseRecognizer = TextRecognition.getClient(
-                new com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions.Builder().build()
-        );
-
-        latinRecognizer.process(image)
-                .addOnSuccessListener(latinText -> {
-                    String latinResult = latinText.getText();
-
-                    chineseRecognizer.process(image)
-                            .addOnSuccessListener(chineseText -> {
-                                String chineseResult = chineseText.getText();
-                                String finalResult = latinResult + "\n" + chineseResult;
-
-                                resultText.setText(finalResult);
-                                copyTextBtn.setVisibility(Button.VISIBLE);
-
-                                // Lưu vào lịch sử
-                                saveToHistory(finalResult);
-
-                                copyTextBtn.setOnClickListener(v -> {
-                                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                                    ClipData clip = ClipData.newPlainText("Recognized Text", finalResult);
-                                    clipboard.setPrimaryClip(clip);
-                                    Toast.makeText(MainActivity.this, "Text Copied", Toast.LENGTH_SHORT).show();
-                                });
-
-                            })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(MainActivity.this, "Lỗi nhận diện tiếng Trung: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(MainActivity.this, "Lỗi nhận diện tiếng Latin: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    
+    private void processCapturedImage() {
+        if (currentPhotoPath != null) {
+            Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
+            processImage(bitmap);
+        }
     }
-
-    // Hàm lưu văn bản vào lịch sử
-    // Hàm lưu văn bản vào lịch sử SharedPreferences
-    private void saveToHistory(String text) {
-        // Mở SharedPreferences với tên "TextHistory"
-        SharedPreferences prefs = getSharedPreferences("TextHistory", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-
-        // Lấy danh sách lịch sử hiện tại dưới dạng chuỗi JSON
-        String historyJson = prefs.getString("history", "[]"); // Nếu chưa có thì dùng mảng rỗng
-        JSONArray jsonArray;
+    
+    private void processImage(Bitmap bitmap) {
+        // Open TextRecognitionActivity with this image
+        Intent intent = new Intent(this, TextRecognitionActivity.class);
+        // Save bitmap to a temporary file and pass the path
+        File tempFile = null;
         try {
-            jsonArray = new JSONArray(historyJson); // Chuyển chuỗi JSON thành mảng
-        } catch (JSONException e) {
-            jsonArray = new JSONArray(); // Nếu lỗi, tạo mảng rỗng mới
+            tempFile = saveBitmapToTemp(bitmap);
+            intent.putExtra("imagePath", tempFile.getAbsolutePath());
+            startActivity(intent);
+        } catch (IOException e) {
+            showSnackbar("Error processing image");
+            e.printStackTrace();
         }
-
-        // Thêm dữ liệu mới vào danh sách
-        jsonArray.put(text);
-
-        // Giới hạn lịch sử tối đa 10 mục: nếu vượt quá thì xóa mục cũ nhất
-        if (jsonArray.length() > 10) {
-            jsonArray.remove(0); // Xóa phần tử đầu tiên (cũ nhất)
-        }
-
-        // Lưu danh sách mới vào SharedPreferences
-        editor.putString("history", jsonArray.toString());
-        editor.apply(); // Lưu thay đổi
     }
-
-
-    //Create methods convert Text to PDF
-    private void convertTextToPDF() throws IOException {
-        String text = resultText.getText().toString(); // Lấy nội dung từ TextView
-
-        if (text.isEmpty()) {
-            Toast.makeText(this, "Không có nội dung để xuất PDF", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Tạo đối tượng PdfDocument
-        PdfDocument pdfDocument = new PdfDocument();
-        Paint paint = new Paint();
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4 size
-        PdfDocument.Page page = pdfDocument.startPage(pageInfo);
-        Canvas canvas = page.getCanvas();
-
-        // Vẽ nội dung lên PDF
-        int x = 50, y = 50;
-        for (String line : text.split("\n")) { // Xử lý xuống dòng
-            canvas.drawText(line, x, y, paint);
-            y += 20; // Khoảng cách giữa các dòng
-        }
-
-        pdfDocument.finishPage(page);
-
-        // Lưu file vào thư mục "Documents"
-        File directory = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
-        if (!directory.exists()) {
-            directory.mkdirs(); // Tạo thư mục nếu chưa có
-        }
-
-        File file = new File(directory, "ConvertedText.pdf");
-        FileOutputStream fos = new FileOutputStream(file);
-        pdfDocument.writeTo(fos);
-        pdfDocument.close();
-        fos.close();
-
-        Uri uri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", file);
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(uri, "application/pdf");
-        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(intent);
-
-        Toast.makeText(this, "PDF đã lưu: " + file.getAbsolutePath(), Toast.LENGTH_LONG).show();
+    
+    private File saveBitmapToTemp(Bitmap bitmap) throws IOException {
+        File tempFile = File.createTempFile("temp_image", ".jpg", getCacheDir());
+        FileOutputStream out = new FileOutputStream(tempFile);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+        out.close();
+        return tempFile;
     }
-
-
-
 }

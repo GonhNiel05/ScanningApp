@@ -2,10 +2,16 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.TextRecognitionActivity" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <item name="colorPrimary">@color/blue</item>
-        <item name="colorPrimaryVariant">@color/green</item>
-        <item name="android:statusBarColor">@color/purple</item>
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/google_blue</item>
+        <item name="colorPrimaryVariant">@color/google_blue_dark</item>
+        <item name="colorSecondary">@color/google_green</item>
+        <item name="colorAccent">@color/google_green</item>
+        <item name="colorError">@color/google_red</item>
+        <item name="android:colorBackground">@color/background_light</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:statusBarColor">@color/google_blue_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <style name="Theme.TextRecognitionActivity" parent="Base.Theme.TextRecognitionActivity" />
