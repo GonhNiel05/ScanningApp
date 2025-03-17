@@ -3,10 +3,22 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="purple">#ADB2D4</color>
-    <color name="blue">#A1E3F9</color>
-   <color name="green">#B6FFA1</color>
-    <color name="dark_blue">#279EFF</color>
-    <color name="dark_green">#35A29F</color>
-    <color name="pink">#FDB7EA</color>
+    
+    <!-- Google's color palette -->
+    <color name="google_blue">#4285F4</color>
+    <color name="google_blue_dark">#3267D6</color>
+    <color name="google_green">#34A853</color>
+    <color name="google_red">#EA4335</color>
+    <color name="google_yellow">#FBBC05</color>
+    
+    <!-- Additional UI colors -->
+    <color name="background_light">#FFFFFF</color>
+    <color name="text_primary">#333333</color>
+    <color name="text_secondary">#757575</color>
+    <color name="divider">#E0E0E0</color>
+    
+    <!-- Missing colors required by drawable resources -->
+    <color name="purple">#9C27B0</color>
+    <color name="green">#4CAF50</color>
+    <color name="dark_green">#2E7D32</color>
 </resources>

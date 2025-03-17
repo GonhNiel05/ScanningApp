@@ -1,70 +1,95 @@
 package com.example.textrecognitionactivity;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.appbar.MaterialToolbar;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class HistoryActivity extends AppCompatActivity {
 
-    private ListView historyItem;
-    private ArrayList<String> historyList;
-    private ArrayAdapter<String> adapter;
+    private RecyclerView historyRecyclerView;
+    private TextView emptyHistoryText;
+    private TextView documentsCount;
+    private TextView textCount;
+    private TextView pdfCount;
+    private List<HistoryAdapter.HistoryItem> historyItems;
+    private HistoryAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        historyItem = findViewById(R.id.historyItem);
-        historyList = loadHistory(); // Load danh sách lịch sử
+        // Set up toolbar
+        MaterialToolbar toolbar = findViewById(R.id.historyToolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, historyList);
-        historyItem.setAdapter(adapter);
-
-        // Xử lý sự kiện khi nhấn vào một item trong ListView
-        historyItem.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String selectedText = historyList.get(position);
-
-                // Copy văn bản vào Clipboard
-                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("Copied Text", selectedText);
-                clipboard.setPrimaryClip(clip);
-
-                // Hiển thị thông báo
-                Toast.makeText(HistoryActivity.this, "Đã sao chép văn bản!", Toast.LENGTH_SHORT).show();
-            }
-        });
+        // Initialize views
+        historyRecyclerView = findViewById(R.id.historyRecyclerView);
+        emptyHistoryText = findViewById(R.id.emptyHistoryText);
+        documentsCount = findViewById(R.id.dashboard_documents_count);
+        textCount = findViewById(R.id.dashboard_text_count);
+        pdfCount = findViewById(R.id.dashboard_pdf_count);
+        
+        // Load dashboard statistics
+        loadDashboardStats();
+        
+        // Set up RecyclerView
+        historyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        historyItems = loadHistory();
+        adapter = new HistoryAdapter(this, historyItems);
+        historyRecyclerView.setAdapter(adapter);
+        
+        // Show empty view if no history
+        if (historyItems.isEmpty()) {
+            emptyHistoryText.setVisibility(View.VISIBLE);
+            historyRecyclerView.setVisibility(View.GONE);
+        } else {
+            emptyHistoryText.setVisibility(View.GONE);
+            historyRecyclerView.setVisibility(View.VISIBLE);
+        }
+    }
+    
+    private void loadDashboardStats() {
+        SharedPreferences statsPrefs = getSharedPreferences("stats_prefs", MODE_PRIVATE);
+        int documents = statsPrefs.getInt("documents_scanned", 0);
+        int textsRecognized = statsPrefs.getInt("texts_recognized", 0);
+        int pdfsCreated = statsPrefs.getInt("pdfs_created", 0);
+        
+        documentsCount.setText(String.valueOf(documents));
+        textCount.setText(String.valueOf(textsRecognized));
+        pdfCount.setText(String.valueOf(pdfsCreated));
     }
 
-    private ArrayList<String> loadHistory() {
+    private List<HistoryAdapter.HistoryItem> loadHistory() {
         SharedPreferences prefs = getSharedPreferences("TextHistory", MODE_PRIVATE);
         String historyJson = prefs.getString("history", "[]");
 
-        ArrayList<String> list = new ArrayList<>();
+        List<HistoryAdapter.HistoryItem> items = new ArrayList<>();
         try {
-            JSONArray jsonArray = new JSONArray(historyJson);
-            for (int i = 0; i < jsonArray.length(); i++) {
-                list.add(jsonArray.getString(i));
+            JSONArray historyArray = new JSONArray(historyJson);
+            for (int i = 0; i < historyArray.length(); i++) {
+                JSONArray entry = historyArray.getJSONArray(i);
+                String timestamp = entry.getString(0);
+                String text = entry.getString(1);
+                items.add(new HistoryAdapter.HistoryItem(timestamp, text));
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return list;
+        return items;
     }
 }
