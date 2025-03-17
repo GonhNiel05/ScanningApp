@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="10dp"
+    tools:context=".MainActivity">
+
+
+    <ImageView
+        android:id="@+id/cameraImage"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/button_gradient"
+        android:scaleType="fitCenter"
+        android:src="@drawable/album_svgrepo_com">
+    </ImageView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/captureImgBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_gradient"
+            android:fontFamily="monospace"
+            android:padding="12dp"
+            android:text="Capture Image"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            app:backgroundTint="@null" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/uploadImgBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="12dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_gradient"
+            android:fontFamily="monospace"
+            android:padding="12dp"
+            android:text="Upload Photo"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            app:backgroundTint="@null" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginHorizontal="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="OCR Text:"
+            android:textColor="@color/black"
+            android:textSize="16sp"/>
+
+        <ImageButton
+            android:id="@+id/historyBtn"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="@color/blue"
+            android:layout_height="wrap_content"
+            android:background="@drawable/border"
+            android:src="@drawable/timeline"/>
+    </LinearLayout>
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        android:id="@+id/resultText"
+        android:hint="Print here...."
+        android:padding="10dp"
+        android:textSize="16sp"
+        android:textColor="@color/black"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/border">
+    </TextView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/copyTextBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="6dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/button_gradient"
+            android:fontFamily="monospace"
+            android:padding="10dp"
+            android:text="Copy Text"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            app:backgroundTint="@null" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/clearTextBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="6dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/button_gradient"
+            android:fontFamily="monospace"
+            android:padding="10dp"
+            android:text="Clear"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            app:backgroundTint="@null" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/convertTextBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="6dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/button_gradient"
+            android:fontFamily="monospace"
+            android:padding="10dp"
+            android:text="Convert"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            app:backgroundTint="@null" />
+
+    </LinearLayout>
+
+</LinearLayout>
+
+

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-path
+
+        name="external_files"
+        path=".">
+
+    </external-path>
+    <!--        Dùng để liên kết với đường dẫn đến FileProvider dùng để cấp quyền truy cập bộ nhớ ngoài cuủa thiết bị-->
+    <!-- files-path: là chia sẻ thuw mục bên trong app-->
+    <!-- external-files-paths: chia sẻ thu mục trong bộ nhớ ngoài-->
+    <!-- root-path: chia sẻ toàn bộ thư muc gốc của ứng dụng-->
+</paths>
